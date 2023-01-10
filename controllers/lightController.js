@@ -97,14 +97,14 @@ exports.getLightById = async (req,res)=>{
         if(result){
             res.json({
                 message: "light fetched",
-                result: result,
-                status: 'success',
+                success: true,
+                status: result.status,
             })
         }
         else{
             res.json({
                 message: "Could not fetch light",
-                status: "failed"
+                success: false
             })
         }
         

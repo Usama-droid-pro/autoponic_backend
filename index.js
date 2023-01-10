@@ -84,7 +84,8 @@ app.use("/lights" , require("./routes/lightsRoute"))
 
 
 
+const port = process.env.PORT || 3000
 
-const server= app.listen(4000, function () {
-    console.log("server started on port 4000")
+const server= app.listen(port, function () {
+    console.log("server started on port "+port)
 })

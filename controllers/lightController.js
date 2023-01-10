@@ -1,6 +1,6 @@
 
 const mongoose = require("mongoose")
-const lightsModel = require("../models/lightsModel")
+const lightsModel = require("../models/LightsModel")
 
 
 exports.createLight = async (req,res)=>{

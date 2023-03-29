@@ -53,15 +53,16 @@ client.on("connect", function () {
 	});
 });
 let count = 0;
-client.on("message", function (topic, message) {
+client.on("message", async function (topic, message) {
 	// message is Buffer
 	console.log(topic);
 	console.log(message.toString());
 	count++;
-	if (count === 30) {
+	// await temp.deleteMany();
+	if (count === 60) {
 		try {
 			console.log("called");
-			temp.create({ value: message.toString() });
+			await temp.create({ value: message.toString() });
 			count = 0;
 		} catch (e) {
 			count = 0;

@@ -5,6 +5,10 @@ const bodyParser = require("body-parser");
 const mqtt = require("mqtt");
 const temp = require("./models/tempratureModel");
 const app = express();
+const http = require("http");
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
 const client = mqtt.connect("mqtt://91.121.93.94");
 const PORT = 3000;
 mongoose.set("strictQuery", false);
@@ -51,26 +55,56 @@ client.on("connect", function () {
 			client.publish("device/led", "Hello mqtt hasnat");
 		}
 	});
+	client.subscribe("device_hasnat_humd", function (err) {
+		if (!err) {
+			client.publish("device/led", "Hello mqtt hasnat");
+		}
+	});
 });
 let count = 0;
-client.on("message", async function (topic, message) {
-	// message is Buffer
-	console.log(topic);
-	console.log(message.toString());
-	count++;
-	// await temp.deleteMany();
-	if (count === 60) {
-		try {
-			console.log("called");
-			await temp.create({ value: message.toString() });
-			count = 0;
-		} catch (e) {
-			count = 0;
-			throw new Error(500, e);
-		}
-	}
 
-	client.publish("device/led", "Hello mqtt hasnat checking");
+io.on("connection", (socket) => {
+	console.log(socket.id);
+
+	client.on("message", async function (topic, message) {
+		// message is Buffer
+		console.log(topic);
+		console.log(message.toString());
+		count++;
+		if (topic === "device_hasnat_temp") {
+			socket.emit("temp", message.toString());
+		} else if (topic === "device_hasnat_humd") {
+			socket.emit("humd", message.toString());
+		}
+		// socket.emit("humd", message.toString());
+		// await temp.deleteMany();
+		if (count === 60) {
+			try {
+				console.log("called");
+				await temp.create({ value: message.toString() });
+				count = 0;
+			} catch (e) {
+				count = 0;
+				console.log(e);
+			}
+		}
+
+		// client.publish("device/led", "Hello mqtt hasnat checking");
+	});
+
+	console.log("a user connected");
+	socket.emit("message", "hi How are you");
+	socket.on("message2", (data) => {
+		console.log(data);
+		client.publish("inTopic", data);
+	});
+	socket.on("message3", (data) => {
+		console.log(data);
+		client.publish("inTopic", data);
+	});
+	socket.on("data", (data) => {
+		console.log(data);
+	});
 });
 
 // //
@@ -105,6 +139,6 @@ client.on("message", async function (topic, message) {
 
 const port = process.env.PORT || 3000;
 
-const server = app.listen(port, function () {
+server.listen(port, function () {
 	console.log("server started on port " + port);
 });

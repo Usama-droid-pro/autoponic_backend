@@ -5,7 +5,14 @@ const bodyParser = require("body-parser");
 const mqtt = require("mqtt");
 const temp = require("./models/tempratureModel");
 const app = express();
-const client = mqtt.connect("mqtt://91.121.93.94");
+const http = require("http");
+const server = http.createServer(app);
+const device = require("./models/devicesModel");
+const { Server } = require("socket.io");
+const humd = require("./models/humidityModel");
+const io = new Server(server);
+// const client = mqtt.connect("mqtt://91.121.93.94");
+const client = require("./socketAndMqtt");
 const PORT = 3000;
 mongoose.set("strictQuery", false);
 
@@ -15,11 +22,7 @@ const cors = require("cors");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(
-	cors({
-		methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
-	})
-);
+app.use(cors("*"));
 
 require("dotenv").config();
 
@@ -42,35 +45,113 @@ app.use("/user", require("./routes/userRoute"));
 app.use("/admin", require("./routes/adminRoute"));
 app.use("/forgetPassword", require("./routes/userForgetRoute"));
 app.use("/dashBoard", require("./routes/dashBoardRoute"));
-app.use("/lights", require("./routes/lightsRoute"));
+app.use("/devices", require("./routes/deviceRoute"));
 app.use("/temp", require("./routes/tempRoutes"));
 
 client.on("connect", function () {
+	console.log("on Connect Called");
 	client.subscribe("device_hasnat_temp", function (err) {
+		if (!err) {
+			// client.publish("device/led", "Hello mqtt hasnat");
+		}
+	});
+	client.subscribe("device_hasnat_humd", function (err) {
+		if (!err) {
+			// client.publish("device/led", "Hello mqtt hasnat");
+		}
+	});
+	client.subscribe("outTopic_hasnat", function (err) {
+		if (!err) {
+			// client.publish("device/led", "Hello mqtt hasnat");
+		}
+	});
+	client.subscribe("previous_state", function (err) {
 		if (!err) {
 			client.publish("device/led", "Hello mqtt hasnat");
 		}
 	});
 });
 let count = 0;
+// let value = "1";
+
 client.on("message", async function (topic, message) {
-	// message is Buffer
 	console.log(topic);
 	console.log(message.toString());
-	count++;
-	// await temp.deleteMany();
-	if (count === 60) {
-		try {
-			console.log("called");
-			await temp.create({ value: message.toString() });
-			count = 0;
-		} catch (e) {
-			count = 0;
-			throw new Error(500, e);
+	if (topic === "previous_state") {
+		console.log("previous state");
+		// console.log(value);
+		const result = await device.find().sort({ nameInProject: "asc" });
+		console.log(result);
+		if (!result) {
+		} else {
+			if (result[0].nameInProject === "device1") {
+				client.publish("previous_state_recieved_device1", result[0].status);
+			}
+			if (result[1].nameInProject === "device2") {
+				client.publish("previous_state_recieved_device2", result[1].status);
+			}
 		}
 	}
+});
 
-	client.publish("device/led", "Hello mqtt hasnat checking");
+io.on("connection", (socket) => {
+	console.log(socket.id);
+
+	client.on("message", async function (topic, message) {
+		// message is Buffer
+		console.log(topic);
+		console.log(message.toString());
+		count++;
+		if (topic === "device_hasnat_temp") {
+			socket.emit("temp", message.toString());
+			if (count === 5) {
+				try {
+					console.log("called");
+					await temp.create({ value: message.toString() });
+					// await humd.create({value})
+					count = 0;
+				} catch (e) {
+					count = 0;
+					console.log(e);
+				}
+			}
+		} else if (topic === "device_hasnat_humd") {
+			socket.emit("humd", message.toString());
+			if (count === 5) {
+				try {
+					console.log("called");
+					await humd.create({ value: message.toString() });
+					// await humd.create({value})
+					count = 0;
+				} catch (e) {
+					count = 0;
+					console.log(e);
+				}
+			}
+		}
+
+		//dfdsfads
+		// socket.emit("humd", message.toString());
+		// await temp.deleteMany();
+
+		client.publish("device/led", "Hello mqtt hasnat checking");
+	});
+
+	console.log("a user connected");
+	// socket.emit("message", "hi How are you");
+	// socket.on("message2", (data) => {
+	// 	value=data;
+	// 	console.log(value);
+	// 	client.publish("inTopic_hasnat", data);
+	// });
+	// socket.on("message3", (data) => {
+	// 	value=data;
+	// 	console.log(value);
+	// 	client.publish("inTopic_hasnat", data);
+	// });
+	// socket.on("data", (data) => {
+	// 	console.log(data);
+	// });
 });
 
 // //
@@ -105,6 +186,8 @@ client.on("message", async function (topic, message) {
 
 const port = process.env.PORT || 3000;
 
-const server = app.listen(port, function () {
+server.listen(port, function () {
 	console.log("server started on port " + port);
 });
+
+// module.exports {client}

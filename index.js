@@ -77,6 +77,7 @@ let count = 0;
 client.on("message", async function (topic, message) {
 	console.log(topic);
 	console.log(message.toString());
+	count++;
 	if (topic === "previous_state") {
 		console.log("previous state");
 		// console.log(value);
@@ -92,6 +93,48 @@ client.on("message", async function (topic, message) {
 			}
 		}
 	}
+
+	// if (count === 5) {
+	if (topic === "device_hasnat_humd") {
+		try {
+			const record = await humd.findOne().sort({ createdAt: -1 });
+			const time = record.createdAt;
+			const currentTime = new Date();
+			const diff = currentTime.getTime() - time.getTime();
+			const mins = diff / 90000;
+			// console.log("time", time);
+			// console.log("currenttime", currentTime);
+			// console.log("diff", diff);
+			// console.log("mins", mins);
+			if (mins > 5) {
+				console.log("called2");
+				await humd.create({ value: message.toString() });
+			}
+			// await humd.create({value})
+			// count = 0;
+		} catch (e) {
+			count = 0;
+			console.log(e);
+		}
+	} else if (topic === "device_hasnat_temp") {
+		try {
+			const record = await temp.findOne().sort({ createdAt: -1 });
+			const time = record.createdAt;
+			const currentTime = new Date();
+			const diff = currentTime.getTime() - time.getTime();
+			const mins = diff / 90000;
+			if (mins > 5) {
+				console.log("called1");
+				await temp.create({ value: message.toString() });
+				// await humd.create({value})
+			}
+			count = 0;
+		} catch (e) {
+			count = 0;
+			console.log(e);
+		}
+		// }
+	}
 });
 
 io.on("connection", (socket) => {
@@ -99,35 +142,19 @@ io.on("connection", (socket) => {
 
 	client.on("message", async function (topic, message) {
 		// message is Buffer
-		console.log(topic);
-		console.log(message.toString());
-		count++;
+
 		if (topic === "device_hasnat_temp") {
+			// console.log("dsdsda");
+			// console.log(topic);
+			// console.log(message.toString());
 			socket.emit("temp", message.toString());
-			if (count === 5) {
-				try {
-					console.log("called");
-					await temp.create({ value: message.toString() });
-					// await humd.create({value})
-					count = 0;
-				} catch (e) {
-					count = 0;
-					console.log(e);
-				}
-			}
-		} else if (topic === "device_hasnat_humd") {
+		}
+		if (topic === "device_hasnat_humd") {
+			// console.log("dsdsda");
+			// console.log(topic);
+			// console.log(message.toString());
+
 			socket.emit("humd", message.toString());
-			if (count === 5) {
-				try {
-					console.log("called");
-					await humd.create({ value: message.toString() });
-					// await humd.create({value})
-					count = 0;
-				} catch (e) {
-					count = 0;
-					console.log(e);
-				}
-			}
 		}
 
 		//dfdsfads

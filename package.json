@@ -21,7 +21,7 @@
     "mongoose": "^6.8.0",
     "mqtt": "^4.3.7",
     "nodemailer": "^6.8.0",
-    "nodemon": "^2.0.20",
+    "nodemon": "^2.0.22",
     "socket.io": "^4.6.1",
     "start": "^5.1.0"
   }

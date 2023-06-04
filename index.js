@@ -40,7 +40,9 @@ mongoose.connect(
 app.use(express.json());
 
 //routes
-
+app.get("/", (req, res) => {
+	res.json({ message: "Server Is In Running State" });
+});
 app.use("/user", require("./routes/userRoute"));
 app.use("/admin", require("./routes/adminRoute"));
 app.use("/forgetPassword", require("./routes/userForgetRoute"));

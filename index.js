@@ -110,7 +110,7 @@ client.on("message", async function (topic, message) {
 			// console.log("mins", mins);
 			if (mins > 5) {
 				console.log("called2");
-				await humd.create({ value: message.toString() });
+				await humd.create({ value: message.toString()});
 			}
 			// await humd.create({value})
 			// count = 0;

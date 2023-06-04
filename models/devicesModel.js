@@ -12,6 +12,10 @@ const devicesSchema = new mongoose.Schema({
 		type: String,
 		enum: ["0", "1"],
 	},
+	automatic: {
+		type: String,
+		enum: ["0", "1"],
+	},
 });
 
 module.exports = mongoose.model("devices", devicesSchema);

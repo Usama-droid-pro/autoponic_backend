@@ -19,6 +19,8 @@ mongoose.set("strictQuery", false);
 // const userLogsModel= require('./models/userLogsModels')
 
 const cors = require("cors");
+const devicesModel = require("./models/devicesModel");
+const moistureModel = require("./models/moistureModel");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -57,12 +59,22 @@ client.on("connect", function () {
 			// client.publish("device/led", "Hello mqtt hasnat");
 		}
 	});
+	client.subscribe("device2_bool_value", function (err) {
+		if (!err) {
+			// client.publish("device/led", "Hello mqtt hasnat");
+		}
+	});
 	client.subscribe("device_hasnat_humd", function (err) {
 		if (!err) {
 			// client.publish("device/led", "Hello mqtt hasnat");
 		}
 	});
 	client.subscribe("outTopic_hasnat", function (err) {
+		if (!err) {
+			// client.publish("device/led", "Hello mqtt hasnat");
+		}
+	});
+	client.subscribe("device_moisture", function (err) {
 		if (!err) {
 			// client.publish("device/led", "Hello mqtt hasnat");
 		}
@@ -74,6 +86,8 @@ client.on("connect", function () {
 	});
 });
 let count = 0;
+
+let val = "0";
 // let value = "1";
 
 client.on("message", async function (topic, message) {
@@ -110,7 +124,28 @@ client.on("message", async function (topic, message) {
 			// console.log("mins", mins);
 			if (mins > 5) {
 				console.log("called2");
-				await humd.create({ value: message.toString()});
+				await humd.create({ value: message.toString() });
+			}
+			// await humd.create({value})
+			// count = 0;
+		} catch (e) {
+			count = 0;
+			console.log(e);
+		}
+	} else if (topic === "device_moisture") {
+		try {
+			const record = await moistureModel.findOne().sort({ createdAt: -1 });
+			const time = record.createdAt;
+			const currentTime = new Date();
+			const diff = currentTime.getTime() - time.getTime();
+			const mins = diff / 90000;
+			// console.log("time", time);
+			// console.log("currenttime", currentTime);
+			// console.log("diff", diff);
+			// console.log("mins", mins);
+			if (mins > 5 && parseInt(message.toString()) > 0) {
+				console.log("called3");
+				await moistureModel.create({ value: message.toString() });
 			}
 			// await humd.create({value})
 			// count = 0;
@@ -136,6 +171,19 @@ client.on("message", async function (topic, message) {
 			console.log(e);
 		}
 		// }
+	}
+
+	if (topic === "device2_bool_value") {
+		console.log(message.toString());
+		if (val !== message.toString()) {
+			const result = await devicesModel.findByIdAndUpdate(
+				{ _id: "6472d6422133a2af8e811239" },
+				{ status: message.toString() },
+				{ new: true }
+			);
+			console.log(result);
+		}
+		val = message.toString();
 	}
 });
 

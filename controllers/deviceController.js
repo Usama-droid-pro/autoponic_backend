@@ -130,6 +130,33 @@ exports.getDeviceById = async (req, res) => {
 	}
 };
 
+exports.automaic = async (req, res) => {
+	try {
+		// const light_id = req.query.light_id;
+
+		const result = await deviceModel.findByIdAndUpdate(
+			{ _id: req.params.id },
+			{ automatic: req.body.status },
+			{ new: true }
+		);
+		console.log(result);
+
+		if (result) {
+			client.publish("device2_automatic", req.body.status);
+			res.status(200).send({ message: "updated", data: result });
+		} else {
+			res.json({
+				message: "could not updated",
+				status: "failed",
+			});
+		}
+	} catch (err) {
+		res.json({
+			message: "Error",
+			error: err.message,
+		});
+	}
+};
 exports.deleteLight = async (req, res) => {
 	try {
 		const light_id = req.query.light_id;

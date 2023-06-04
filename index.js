@@ -202,9 +202,20 @@ io.on("connection", (socket) => {
 		if (topic === "device_hasnat_humd") {
 			// console.log("dsdsda");
 			// console.log(topic);
-			// console.log(message.toString());
+			// console.log("jhjhhjh");
+			console.log(parseInt(message.toString()));
 
 			socket.emit("humd", message.toString());
+		}
+		if (topic === "device_moisture") {
+			// console.log("dsdsda");
+			// console.log(topic);
+			// console.log(message.toString());
+			if (parseFloat(message.toString()) < 0) {
+				socket.emit("moist", "0.00");
+			} else {
+				socket.emit("moist", message.toString());
+			}
 		}
 
 		//dfdsfads
